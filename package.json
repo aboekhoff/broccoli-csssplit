@@ -1,0 +1,21 @@
+{
+  "name": "broccoli-csssplit",
+  "description": "csssplitter for broccoli",
+  "version": "0.0.1",
+  "author": "Andrew Boekhoff <aboekhoff@gmail.com>",
+  "main": "index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aboekhoff/broccoli-css"
+  },
+  "keywords": [
+    "broccoli-plugin",
+    "css",
+    "javascript"
+  ],
+  "dependencies": {
+    "broccoli-writer": "^0.1.1",
+    "css": "2.1.0"
+  }
+}
