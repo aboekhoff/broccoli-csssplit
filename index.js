@@ -1,35 +1,102 @@
-var Filter   = require('broccoli-filter');
-var csssplit = require('./csssplit.js');
+var fs = require('fs')
+var path = require('path')
+var mkdirp = require('mkdirp')
+var Promise = require('rsvp').Promise
+var quickTemp = require('quick-temp')
+var Writer = require('broccoli-writer')
+var helpers = require('broccoli-kitchen-sink-helpers')
+var walkSync = require('walk-sync')
+var mapSeries = require('promise-map-series')
+var css = require('css');
 
-module.exports = CSSSplitter;
-CSSSplitter.prototype = Object.create(Filter.prototype);
-CSSSplitter.prototype.constructor = CSSSplitter;
+var MAX_SELECTORS = 4095;
 
-function CSSSplitter () {
-  if (!(this instanceof CSSSplitter)) return new CSSSplitter(); 	
-};
+module.exports = CSSS
+CSSS.prototype = Object.create(Writer.prototype)
+CSSS.prototype.constructor = CSSS
 
-CSSSplitter.prototype.extensions = ['css']
-
-CSSSplitter.prototype.targetExtension = 'css'
-
-CSSSplitter.prototype.processFile = function(srcDir, destDir, relativePath) {
-  	var self = this;
-  	var string = fs.readFileSync(srcDir + '/' + relativePath, { encoding: 'utf8' });
-  	return Promise.resolve(self.processString(string, relativePath))
-  		.then(function (outputStrings) {
-   	  		var outputPath = self.getDestFilePath(relativePath);
-   	  		for (var i=0; i<outputStrings.length; i++) {
-   	  			var path = (destDir + '/' + outputPath).replace('/\.css$/', '');
-   	  			path = i === 0 ? path : path + '.' + i;
-   	  			path = path + '.css';  
-   	  			fs.writeFileSync(path, outputStrings[i], { encoding: 'utf8' });
-   	  		}
-    	});	
+function CSSS (inputTree, options) {
+	if (!(this instanceof CSSS)) { return new CSSS(inputTree, options); }
+	this.inputTree = inputTree
+	this.options = options || {}
 }
 
-CSSSplitter.prototype.processString = function(string) {
-	var strings = csssplit(string, 4096);
-	strings[0] = string; // make the first css file the full file so >IE9 requires only one file  
-	return strings;
+CSSS.prototype.getCacheDir = function () {
+	return quickTemp.makeOrReuse(this, 'tmpCacheDir')
+}
+
+CSSS.prototype.write = function (readTree, destDir) {
+	var self = this;
+
+	return readTree(self.inputTree).then(function(srcDir) {
+		console.log(srcDir, destDir);
+
+		var files = helpers.multiGlob(["**/*.css"], {
+			cwd:  srcDir,
+			root: srcDir,
+		    nomount: false
+		});
+
+		console.log(files);
+
+		for (var i=0; i < files.length; i++) {
+			var fileSourcePath = path.join(srcDir, files[i]);
+			var fileDestPath   = path.join(destDir, files[i]);
+			var string = fs.readFileSync(fileSourcePath, { encoding: 'utf8' });
+			var pages = self.split(string, MAX_RULES);
+			pages[0] = string;
+
+			for (var j=0; j<csss.length; j++) {
+				var finalDestPath = fileDestPath.replace(/\.css$/, '');
+				finalDestPath = j === 0 ? finalDestPath : finalDestPath + '.' + j;
+				finalDestPath = finalDestPath + '.css';	  
+				self._writeFileSync(finalDestPath, pages[j], { encoding: 'utf8' });
+			}
+		} 
+
+	});
+}
+
+CSSS.prototype.cleanup = function () {
+	quickTemp.remove(this, 'tmpCacheDir')
+	Writer.prototype.cleanup.call(this)
+}
+
+CSSS.prototype._writeFileSync = function(destPath, content) {
+	if (destPath[destPath.length -1] === '/') {
+    	destPath = destPath.slice(0, -1)
+  	}
+
+  	destDir = path.dirname(destPath);
+  	if (!fs.existsSync(destDir)) {
+    	mkdirp.sync(destDir)
+  	}
+  	fs.writeFileSync(destPath, content, { encoding: 'utf8' });
+}
+
+CSSS.prototype.split = function(string) {
+	function clone(ast) { return css.parse(css.stringify(ast)); }
+
+    var ast   = css.parse(string);
+    var pages = [];
+    var count = 0;
+    var page  = null;
+
+    function pushPage() {
+        count = 0;
+        page  = clone(ast);
+        page.stylesheet.rules = [];
+        pages.push(page);
+    }
+
+    pushPage();
+
+    ast.stylesheet.rules.forEach(function(rule) {
+        if (count + rule.selectors.length >= MAX_SELECTORS) { pushPage(); }
+        count += rule.selectors.length;
+        page.rules.push(rule);
+    })
+
+    return pages.map(css.stringify);
+
 }
