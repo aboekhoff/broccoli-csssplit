@@ -25,15 +25,12 @@ CSSS.prototype.write = function (readTree, destDir) {
 	var self = this;
 
 	return readTree(self.inputTree).then(function(srcDir) {
-		console.log(srcDir, destDir);
 
 		var files = helpers.multiGlob(["**/*.css"], {
 			cwd:  srcDir,
 			root: srcDir,
 		    nomount: false
 		});
-
-		console.log(files);
 
 		for (var i=0; i < files.length; i++) {
 			var fileSourcePath = path.join(srcDir, files[i]);
