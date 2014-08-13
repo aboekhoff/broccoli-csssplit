@@ -1,12 +1,8 @@
 var fs = require('fs')
 var path = require('path')
 var mkdirp = require('mkdirp')
-var Promise = require('rsvp').Promise
-var quickTemp = require('quick-temp')
 var Writer = require('broccoli-writer')
 var helpers = require('broccoli-kitchen-sink-helpers')
-var walkSync = require('walk-sync')
-var mapSeries = require('promise-map-series')
 var css = require('css');
 
 var MAX_SELECTORS = 4095;
