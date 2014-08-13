@@ -38,7 +38,7 @@ CSSS.prototype.write = function (readTree, destDir) {
 				var finalDestPath = fileDestPath.replace(/\.css$/, '');
 				finalDestPath = j === 0 ? finalDestPath : finalDestPath + '.' + j;
 				finalDestPath = finalDestPath + '.css';	  
-				self._writeFileSync(finalDestPath, pages[j], { encoding: 'utf8' });
+				self._writeFileSync(finalDestPath, css.stringify(pages[j]), { encoding: 'utf8' });
 			}
 		} 
 
@@ -58,8 +58,6 @@ CSSS.prototype._writeFileSync = function(destPath, content) {
 }
 
 CSSS.prototype.split = function(string) {
-	function clone(ast) { return css.parse(css.stringify(ast)); }
-
     var ast   = css.parse(string);
     var pages = [];
     var count = 0;
@@ -67,7 +65,7 @@ CSSS.prototype.split = function(string) {
 
     function pushPage() {
         count = 0;
-        page  = clone(ast);
+        page  = { type: "stylesheet", rules: [] };
         page.stylesheet.rules = [];
         pages.push(page);
     }
@@ -82,6 +80,6 @@ CSSS.prototype.split = function(string) {
         page.stylesheet.rules.push(rule);
     })
 
-    return pages.map(css.stringify);
+    return pages 
 
 }
