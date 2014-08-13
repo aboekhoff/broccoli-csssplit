@@ -53,10 +53,6 @@ CSSS.prototype.write = function (readTree, destDir) {
 	});
 }
 
-CSSS.prototype.cleanup = function () {
-	Writer.prototype.cleanup.call(this)
-}
-
 CSSS.prototype._writeFileSync = function(destPath, content) {
 	if (destPath[destPath.length -1] === '/') {
     	destPath = destPath.slice(0, -1)
