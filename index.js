@@ -65,7 +65,7 @@ CSSS.prototype.split = function(string) {
 
     function pushPage() {
         count = 0;
-        page  = { type: "stylesheet", rules: [] };
+        page  = { type: "stylesheet", stylesheet: { rules: [] } }; 
         page.stylesheet.rules = [];
         pages.push(page);
     }

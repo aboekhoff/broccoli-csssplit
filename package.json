@@ -1,7 +1,7 @@
 {
   "name": "broccoli-csssplit",
   "description": "csssplitter for broccoli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": "Andrew Boekhoff <aboekhoff@gmail.com>",
   "main": "index.js",
   "license": "MIT",
