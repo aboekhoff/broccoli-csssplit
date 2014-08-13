@@ -33,9 +33,8 @@ CSSS.prototype.write = function (readTree, destDir) {
 			var fileDestPath   = path.join(destDir, files[i]);
 			var string = fs.readFileSync(fileSourcePath, { encoding: 'utf8' });
 			var pages = self.split(string, MAX_SELECTORS);
-			pages[0] = string;
 
-			for (var j=0; j<pages.length; j++) {
+			for (var j=1; j<pages.length; j++) {
 				var finalDestPath = fileDestPath.replace(/\.css$/, '');
 				finalDestPath = j === 0 ? finalDestPath : finalDestPath + '.' + j;
 				finalDestPath = finalDestPath + '.css';	  
