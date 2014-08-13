@@ -17,10 +17,6 @@ function CSSS (inputTree, options) {
 	this.options = options || {}
 }
 
-CSSS.prototype.getCacheDir = function () {
-	return quickTemp.makeOrReuse(this, 'tmpCacheDir')
-}
-
 CSSS.prototype.write = function (readTree, destDir) {
 	var self = this;
 
