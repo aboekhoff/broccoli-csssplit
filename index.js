@@ -39,10 +39,10 @@ CSSS.prototype.write = function (readTree, destDir) {
 			var fileSourcePath = path.join(srcDir, files[i]);
 			var fileDestPath   = path.join(destDir, files[i]);
 			var string = fs.readFileSync(fileSourcePath, { encoding: 'utf8' });
-			var pages = self.split(string, MAX_RULES);
+			var pages = self.split(string, MAX_SELECTORS);
 			pages[0] = string;
 
-			for (var j=0; j<csss.length; j++) {
+			for (var j=0; j<pages.length; j++) {
 				var finalDestPath = fileDestPath.replace(/\.css$/, '');
 				finalDestPath = j === 0 ? finalDestPath : finalDestPath + '.' + j;
 				finalDestPath = finalDestPath + '.css';	  
@@ -54,7 +54,6 @@ CSSS.prototype.write = function (readTree, destDir) {
 }
 
 CSSS.prototype.cleanup = function () {
-	quickTemp.remove(this, 'tmpCacheDir')
 	Writer.prototype.cleanup.call(this)
 }
 
@@ -88,9 +87,11 @@ CSSS.prototype.split = function(string) {
     pushPage();
 
     ast.stylesheet.rules.forEach(function(rule) {
-        if (count + rule.selectors.length >= MAX_SELECTORS) { pushPage(); }
-        count += rule.selectors.length;
-        page.rules.push(rule);
+    	if (rule.selectors) {
+        	if (count + rule.selectors.length >= MAX_SELECTORS) { pushPage(); }
+        	count += rule.selectors.length; 
+        }
+        page.stylesheet.rules.push(rule);
     })
 
     return pages.map(css.stringify);
