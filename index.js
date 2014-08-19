@@ -3,6 +3,8 @@ var path = require('path')
 var mkdirp = require('mkdirp')
 var Writer = require('broccoli-writer')
 var helpers = require('broccoli-kitchen-sink-helpers')
+var walkSync = require('walk-sync')
+var mapSeries = require('promise-map-series')
 var css = require('css');
 
 var MAX_SELECTORS = 4095;
@@ -21,40 +23,36 @@ CSSS.prototype.write = function (readTree, destDir) {
 	var self = this;
 
 	return readTree(self.inputTree).then(function(srcDir) {
+        var paths = walkSync(srcDir);
 
-		var files = helpers.multiGlob(["**/*.css"], {
-			cwd:  srcDir,
-			root: srcDir,
-		    nomount: false
-		});
+        return mapSeries(paths, function(relativePath) {
+            if (/\/$/.test(relativePath)) {
+                mkdirp.sync(destDir + '/' + relativePath)
+            } else {
+                helpers.copyPreserveSync(
+                    path.join(srcDir, relativePath),
+                    path.join(destDir, relativePath)
+                )
 
-		for (var i=0; i < files.length; i++) {
-			var fileSourcePath = path.join(srcDir, files[i]);
-			var fileDestPath   = path.join(destDir, files[i]);
-			var string = fs.readFileSync(fileSourcePath, { encoding: 'utf8' });
-			var pages = self.split(string, MAX_SELECTORS);
+                if (/\.css$/.test(relativePath)) {
+                    var srcPath  = path.join(srcDir, relativePath);
+                    var destPath = path.join(destDir, relativePath);
+                    var rawcss   = fs.readFileSync(srcPath, { encoding: 'utf8' });
+                    var pages    = self.split(rawcss, MAX_SELECTORS);
 
-			for (var j=1; j<pages.length; j++) {
-				var finalDestPath = fileDestPath.replace(/\.css$/, '');
-				finalDestPath = j === 0 ? finalDestPath : finalDestPath + '_' + j;
-				finalDestPath = finalDestPath + '.css';	  
-				self._writeFileSync(finalDestPath, css.stringify(pages[j]), { encoding: 'utf8' });
-			}
-		} 
+                    for (var i=1; i<pages.length; i++) {
+                        var finalDestPath = destPath.replace(/\.css$/, '.' + i + '.css');
+                        fs.writeFileSync(finalDestPath, css.stringify(pages[i]), { encoding: 'utf8'}); 
+                    }
+
+                }
+
+            }
+
+        }); 
 
 	});
-}
 
-CSSS.prototype._writeFileSync = function(destPath, content) {
-	if (destPath[destPath.length -1] === '/') {
-    	destPath = destPath.slice(0, -1)
-  	}
-
-  	destDir = path.dirname(destPath);
-  	if (!fs.existsSync(destDir)) {
-    	mkdirp.sync(destDir)
-  	}
-  	fs.writeFileSync(destPath, content, { encoding: 'utf8' });
 }
 
 CSSS.prototype.split = function(string) {

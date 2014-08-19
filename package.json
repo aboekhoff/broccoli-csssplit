@@ -1,7 +1,7 @@
 {
   "name": "broccoli-csssplit",
   "description": "csssplitter for broccoli",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": "Andrew Boekhoff <aboekhoff@gmail.com>",
   "main": "index.js",
   "license": "MIT",
@@ -19,6 +19,8 @@
     "css": "^2.1.0",
     "mkdirp": "^0.3.5",
     "broccoli-writer": "^0.1.1",
-    "broccoli-kitchen-sink-helpers": "^0.2.0"
+    "broccoli-kitchen-sink-helpers": "^0.2.0",
+    "walk-sync": "^0.1.0",
+    "promise-map-series": "^0.2.0"
   }
 }
