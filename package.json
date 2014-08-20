@@ -1,13 +1,13 @@
 {
   "name": "broccoli-csssplit",
   "description": "csssplitter for broccoli",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "Andrew Boekhoff <aboekhoff@gmail.com>",
   "main": "index.js",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aboekhoff/broccoli-css"
+    "url": "https://github.com/aboekhoff/broccoli-csssplit.git"
   },
   "keywords": [
     "IE",
