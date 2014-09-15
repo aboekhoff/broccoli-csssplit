@@ -1,7 +1,7 @@
 var fs = require('fs')
 var path = require('path')
 var mkdirp = require('mkdirp')
-var Writer = require('broccoli-writer')
+var Writer = require('broccoli-caching-writer')
 var helpers = require('broccoli-kitchen-sink-helpers')
 var walkSync = require('walk-sync')
 var mapSeries = require('promise-map-series')
@@ -19,39 +19,35 @@ function CSSS (inputTree, options) {
 	this.options = options || {}
 }
 
-CSSS.prototype.write = function (readTree, destDir) {
+CSSS.prototype.updateCache = function (srcDir, destDir) {
 	var self = this;
+    var paths = walkSync(srcDir);
 
-	return readTree(self.inputTree).then(function(srcDir) {
-        var paths = walkSync(srcDir);
+    return mapSeries(paths, function(relativePath) {
+        if (/\/$/.test(relativePath)) {
+            mkdirp.sync(destDir + '/' + relativePath)
+        } else {
+            helpers.copyPreserveSync(
+                path.join(srcDir, relativePath),
+                path.join(destDir, relativePath)
+            )
 
-        return mapSeries(paths, function(relativePath) {
-            if (/\/$/.test(relativePath)) {
-                mkdirp.sync(destDir + '/' + relativePath)
-            } else {
-                helpers.copyPreserveSync(
-                    path.join(srcDir, relativePath),
-                    path.join(destDir, relativePath)
-                )
+            if (/\.css$/.test(relativePath)) {
+                var srcPath  = path.join(srcDir, relativePath);
+                var destPath = path.join(destDir, relativePath);
+                var rawcss   = fs.readFileSync(srcPath, { encoding: 'utf8' });
+                var pages    = self.split(rawcss, MAX_SELECTORS);
 
-                if (/\.css$/.test(relativePath)) {
-                    var srcPath  = path.join(srcDir, relativePath);
-                    var destPath = path.join(destDir, relativePath);
-                    var rawcss   = fs.readFileSync(srcPath, { encoding: 'utf8' });
-                    var pages    = self.split(rawcss, MAX_SELECTORS);
-
-                    for (var i=1; i<pages.length; i++) {
-                        var finalDestPath = destPath.replace(/\.css$/, '.' + i + '.css');
-                        fs.writeFileSync(finalDestPath, css.stringify(pages[i]), { encoding: 'utf8'}); 
-                    }
-
+                for (var i=1; i<pages.length; i++) {
+                    var finalDestPath = destPath.replace(/\.css$/, '.' + i + '.css');
+                    fs.writeFileSync(finalDestPath, css.stringify(pages[i]), { encoding: 'utf8'});
                 }
 
             }
 
-        }); 
+        }
 
-	});
+    });
 
 }
 
@@ -63,7 +59,7 @@ CSSS.prototype.split = function(string) {
 
     function pushPage() {
         count = 0;
-        page  = { type: "stylesheet", stylesheet: { rules: [] } }; 
+        page  = { type: "stylesheet", stylesheet: { rules: [] } };
         page.stylesheet.rules = [];
         pages.push(page);
     }
@@ -73,11 +69,11 @@ CSSS.prototype.split = function(string) {
     ast.stylesheet.rules.forEach(function(rule) {
     	if (rule.selectors) {
         	if (count + rule.selectors.length >= MAX_SELECTORS) { pushPage(); }
-        	count += rule.selectors.length; 
+        	count += rule.selectors.length;
         }
         page.stylesheet.rules.push(rule);
     })
 
-    return pages 
+    return pages
 
 }
