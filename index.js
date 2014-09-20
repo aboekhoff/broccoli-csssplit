@@ -71,18 +71,21 @@ CSSS.prototype.split = function(string) {
 
     	if (rule.type == 'media') {
     		rule.rules.forEach(function(mrule) {
-    			numSelectors += mrule.selectors.length;
+    			if (mrule.selectors) {
+    				numSelectors += mrule.selectors.length;
+    			}
     		})
     	}
 
     	else if (rule.type == 'rule') {
-    		numSelectors += rule.selectors.length;
+    		numSelectors = rule.selectors.length;
     	}
 
     	if (count + numSelectors >= MAX_SELECTORS) {
     		pushPage();
     	}
 
+    	count += numSelectors;
     	page.stylesheet.rules.push(rule);
 
     })
