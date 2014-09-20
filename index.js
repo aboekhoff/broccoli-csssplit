@@ -67,11 +67,24 @@ CSSS.prototype.split = function(string) {
     pushPage();
 
     ast.stylesheet.rules.forEach(function(rule) {
-    	if (rule.selectors) {
-        	if (count + rule.selectors.length >= MAX_SELECTORS) { pushPage(); }
-        	count += rule.selectors.length;
-        }
-        page.stylesheet.rules.push(rule);
+    	var numSelectors = 0;
+
+    	if (rule.type == 'media') {
+    		rule.rules.forEach(function(mrule) {
+    			numSelectors += mrule.selectors.length;
+    		})
+    	}
+
+    	else if (rule.type == 'rule') {
+    		numSelectors += rule.selectors.length;
+    	}
+
+    	if (count + numSelectors >= MAX_SELECTORS) {
+    		pushPage();
+    	}
+
+    	page.stylesheet.rules.push(rule);
+
     })
 
     return pages
